@@ -72,22 +72,24 @@ func (b *Block) proofOfWork(prevBlock Block) *Block {
 		b.timestamp = util.NowUnixMs()
 		b.nonce++
 
-		if prevBlock.timestamp+mineRate >= b.timestamp {
-			b.difficulty = prevBlock.difficulty + 1
-		} else {
-			b.difficulty = prevBlock.difficulty - 1
-		}
+		b.calcDifficulty(prevBlock)
 
 		b.hashBlock()
 
 		if b.hasNonce() {
-			fmt.Printf("Increase %v \n %v >= %v \n", prevBlock.timestamp+mineRate >= b.timestamp, prevBlock.timestamp+mineRate, b.timestamp)
 			break
 		}
 	}
 
-	fmt.Printf("hash %v block %v", b.hash, b)
 	return b
+}
+
+func (b *Block) calcDifficulty(prevBlock Block) {
+	if prevBlock.timestamp+mineRate > b.timestamp {
+		b.difficulty = prevBlock.difficulty + 1
+	} else {
+		b.difficulty = prevBlock.difficulty - 1
+	}
 }
 
 func (b *Block) hashBlock() *Block {
