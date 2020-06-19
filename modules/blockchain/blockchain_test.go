@@ -30,7 +30,7 @@ func TestBlockchainInvalidation(t *testing.T) {
 	bc := Genisis()
 	bc.MineBlock("test1")
 	bc.MineBlock("test2")
-	bc.blocks[1].SetValue("INSERTED")
+	bc.blocks[1].value = "INSERTED"
 
 	if bc.validChain() {
 		t.Error("Blockchain should be invalid due to injected value")

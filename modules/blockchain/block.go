@@ -19,10 +19,6 @@ type Block struct {
 	difficulty   int
 }
 
-func (b *Block) SetValue(s string) {
-	b.value = s
-}
-
 func (b *Block) proofOfWork(prevBlock Block) *Block {
 	for {
 		b.timestamp = util.NowUnixMs()

@@ -8,6 +8,7 @@ import (
 
 const mineRate = 1000
 const startingDifficulty = 3
+const batchSize = 256
 
 // Blockchain represents the chain of blocks
 type Blockchain struct {
@@ -67,12 +68,11 @@ func monitorWorker(wg *sync.WaitGroup, ch chan bool) {
 	close(ch)
 }
 
-// TODO: batch validations into groups of 64
-func (bc *Blockchain) validChain() bool {
+func batch(upperIndex int, lowerIndex int, bc *Blockchain) bool {
 	wg := &sync.WaitGroup{}
 	c := make(chan bool)
 
-	for i := 1; i < len(bc.blocks); i++ {
+	for i := upperIndex; i > lowerIndex; i-- {
 		wg.Add(1)
 		go validPreviousHash(*bc.blocks[i], *bc.blocks[i-1], c, wg)
 	}
@@ -86,6 +86,31 @@ func (bc *Blockchain) validChain() bool {
 	}
 
 	return true
+}
+
+func calcLower(upperIndex int) int {
+	if upperIndex-batchSize >= 0 {
+		return upperIndex - batchSize
+	}
+
+	return 0
+}
+
+func (bc *Blockchain) validChain() bool {
+	upperIndex := len(bc.blocks) - 1
+	lowerIndex := calcLower(upperIndex)
+	valid := true
+
+	for {
+		valid = batch(upperIndex, lowerIndex, bc)
+		upperIndex = lowerIndex
+		lowerIndex = calcLower(upperIndex)
+		if upperIndex <= 0 || valid == false {
+			break
+		}
+	}
+
+	return valid
 }
 
 // PrintBlocks prints formatted blocks to console
