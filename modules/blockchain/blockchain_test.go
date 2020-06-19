@@ -4,40 +4,6 @@ import (
 	"testing"
 )
 
-// test the block hash function
-func TestBlockHash(t *testing.T) {
-	blockOne := &Block{
-		timestamp:    1592470203316,
-		previousHash: "Genisis",
-		value:        "foo",
-		difficulty:   4,
-		nonce:        1029561,
-	}
-
-	blockOne.hashBlock()
-
-	blockTwo := &Block{
-		timestamp:    1592470203316,
-		previousHash: "Genisis",
-		value:        "foo",
-		difficulty:   4,
-		nonce:        1029561,
-	}
-
-	blockTwo.hashBlock()
-
-	if blockOne.hash != blockTwo.hash {
-		t.Errorf("identical blocks hash should match : %v != %v", blockOne.hash, blockTwo.hash)
-	}
-
-	blockTwo.value = "bar"
-	blockTwo.hashBlock()
-
-	if blockOne.hash == blockTwo.hash {
-		t.Error("different blocks should have different hashes")
-	}
-}
-
 // Test Genisis creation
 func TestGenisisBlockchain(t *testing.T) {
 	bc := Genisis()
@@ -48,63 +14,63 @@ func TestGenisisBlockchain(t *testing.T) {
 	}
 }
 
-// Test if block has required nonce
-func TestNonce(t *testing.T) {
-	// Test has nonce pass
-	b := &Block{
-		difficulty: 4,
-		hash:       "0000ncfhjdekasdnfasjdfasdf",
-	}
+// Test if validChain will validate a valid chain
+func TestBlockchainValidation(t *testing.T) {
+	bc := Genisis()
+	bc.MineBlock("test1")
+	bc.MineBlock("test2")
 
-	n := b.hasNonce()
-
-	if !n {
-		t.Error("if block hash has 4 leading `0` and difficulty is `4` `hashNonce` should be `true`")
-	}
-
-	// Test has nonce fail
-	b.difficulty++
-	n = b.hasNonce()
-
-	if n {
-		t.Error("if block hash has 4 leading `0` and difficulty is `5` `hashNonce` should be `false`")
+	if !bc.validChain() {
+		t.Error("Blockchain should be valid")
 	}
 }
 
-func TestCalcDifficulty(t *testing.T) {
-	pb := &Block{
-		timestamp:  1000,
-		difficulty: 5,
+// Test if validChain will invalidate an invalid chain
+func TestBlockchainInvalidation(t *testing.T) {
+	bc := Genisis()
+	bc.MineBlock("test1")
+	bc.MineBlock("test2")
+	bc.blocks[1].SetValue("INSERTED")
+
+	if bc.validChain() {
+		t.Error("Blockchain should be invalid due to injected value")
+	}
+}
+
+func TestReplaceChain(t *testing.T) {
+	bc := Genisis()
+	bc.MineBlock("block1")
+
+	nc := Genisis()
+	nc.MineBlock("newBlock1")
+	nc.MineBlock("newBlock2")
+
+	bc.ReplaceChain(nc)
+
+	if len(bc.blocks) != 3 {
+		t.Error("Blockchain should have length of three")
 	}
 
-	cb := &Block{
-		timestamp: pb.timestamp + mineRate,
+	if bc.blocks[1].value != "newBlock1" || bc.blocks[2].value != "newBlock2" {
+		t.Errorf("Blockchain should replace old blocks with new blocks")
+	}
+}
+
+func TestDoNotReplaceChain(t *testing.T) {
+	bc := Genisis()
+	bc.MineBlock("block1")
+	bc.MineBlock("block2")
+
+	nc := Genisis()
+	nc.MineBlock("newBlock1")
+
+	bc.ReplaceChain(nc)
+
+	if len(bc.blocks) != 3 {
+		t.Error("Blockchain should have length of three")
 	}
 
-	cb.calcDifficulty(*pb)
-
-	if cb.difficulty != pb.difficulty-1 {
-		t.Errorf(`if time is equal to previous block plus mine rate '%v' difficulty should decrease, in order to mine block quicker. 
-		- Previous Block difficulty %v 	: Previous Block timestamp : %v
-		- Current Block difficulty %v 	: Current Block timestamp : %v`, mineRate, pb.difficulty, pb.timestamp, cb.difficulty, cb.timestamp)
+	if bc.blocks[1].value != "block1" || bc.blocks[2].value != "block2" {
+		t.Errorf("Blockchain blocks should remain the same")
 	}
-
-	cb.timestamp = pb.timestamp + mineRate + 1
-	cb.calcDifficulty(*pb)
-
-	if cb.difficulty != pb.difficulty-1 {
-		t.Errorf(`if time is greater to previous block plus mine rate '%v' difficulty should decrease, in order to mine block quicker. 
-		- Previous Block difficulty %v 	: Previous Block timestamp : %v
-		- Current Block difficulty %v 	: Current Block timestamp : %v`, mineRate, pb.difficulty, pb.timestamp, cb.difficulty, cb.timestamp)
-	}
-
-	cb.timestamp = pb.timestamp + mineRate - 1
-	cb.calcDifficulty(*pb)
-
-	if cb.difficulty != pb.difficulty+1 {
-		t.Errorf(`if time is less than previous block plus minerate '%v' difficulty should increase, in order to mine block slower. 
-		- Previous Block difficulty %v 	: Previous Block timestamp : %v
-		- Current Block difficulty %v 	: Current Block timestamp : %v`, mineRate, pb.difficulty, pb.timestamp, cb.difficulty, cb.timestamp)
-	}
-
 }

@@ -1,10 +1,8 @@
 package blockchain
 
 import (
-	"fmt"
-	"strings"
+	"sync"
 
-	"github.com/murryIsDeveloping/fernychain-go/modules/hashing"
 	"github.com/murryIsDeveloping/fernychain-go/modules/util"
 )
 
@@ -25,11 +23,17 @@ func Genisis() *Blockchain {
 	g := &Block{
 		timestamp:  util.NowUnixMs(),
 		difficulty: startingDifficulty,
-		hash:       hashing.Hash("Genisis"),
 	}
+
+	g.hash = hashBlock(*g)
 
 	bc.blocks = append(bc.blocks, g)
 	return bc
+}
+
+// GetBlock gets a read only value of the block
+func (bc *Blockchain) GetBlock(index int) Block {
+	return *bc.blocks[index]
 }
 
 // MineBlock mines a block by generating a new block and adding it to the blockchain
@@ -46,71 +50,47 @@ func (bc *Blockchain) MineBlock(value string) *Block {
 
 	nb := b.proofOfWork(*prevBlock)
 	bc.blocks = append(bc.blocks, nb)
-	nb.print()
+	nb.Print()
 	return nb
+}
+
+// ReplaceChain will replace current chains blocks with input blockchain blocks
+// if all blocks are valid and length of the new chain is greater than the current chain
+func (bc *Blockchain) ReplaceChain(rc *Blockchain) {
+	if rc.validChain() && len(rc.blocks) > len(bc.blocks) {
+		bc.blocks = rc.blocks
+	}
+}
+
+func monitorWorker(wg *sync.WaitGroup, ch chan bool) {
+	wg.Wait()
+	close(ch)
+}
+
+// TODO: batch validations into groups of 64
+func (bc *Blockchain) validChain() bool {
+	wg := &sync.WaitGroup{}
+	c := make(chan bool)
+
+	for i := 1; i < len(bc.blocks); i++ {
+		wg.Add(1)
+		go validPreviousHash(*bc.blocks[i], *bc.blocks[i-1], c, wg)
+	}
+
+	go monitorWorker(wg, c)
+
+	for res := range c {
+		if !res {
+			return false
+		}
+	}
+
+	return true
 }
 
 // PrintBlocks prints formatted blocks to console
 func (bc *Blockchain) PrintBlocks() {
 	for _, b := range bc.blocks {
-		b.print()
+		b.Print()
 	}
-}
-
-// Block represents a block within the blockchain
-type Block struct {
-	timestamp    int64
-	hash         string
-	value        string
-	previousHash string
-	nonce        int
-	difficulty   int
-}
-
-func (b *Block) proofOfWork(prevBlock Block) *Block {
-	for {
-		b.timestamp = util.NowUnixMs()
-		b.nonce++
-
-		b.calcDifficulty(prevBlock)
-
-		b.hashBlock()
-
-		if b.hasNonce() {
-			break
-		}
-	}
-
-	return b
-}
-
-func (b *Block) calcDifficulty(prevBlock Block) {
-	if prevBlock.timestamp+mineRate > b.timestamp {
-		b.difficulty = prevBlock.difficulty + 1
-	} else {
-		b.difficulty = prevBlock.difficulty - 1
-	}
-}
-
-func (b *Block) hashBlock() *Block {
-	h := hashing.Hash(fmt.Sprint(b.timestamp, b.value, b.previousHash, b.difficulty, b.nonce))
-	b.hash = h
-	return b
-}
-
-func (b *Block) hasNonce() bool {
-	nonceNeeded := strings.Repeat("0", b.difficulty)
-	currentNonce := b.hash[:b.difficulty]
-	return nonceNeeded == currentNonce
-}
-
-func (b *Block) print() {
-	fmt.Printf(`Block - hash: %v
-	timestamp: %v
-	value: %v
-	nonce: %v
-	difficulty: %v
-	previousHash: %v
-
-`, b.hash, b.timestamp, b.value, b.nonce, b.difficulty, b.previousHash)
 }

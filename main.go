@@ -14,4 +14,14 @@ func main() {
 	bc.MineBlock("You")
 	bc.MineBlock("lovely")
 	bc.MineBlock("thing")
+
+	nc := blockchain.Genisis()
+	nc.MineBlock("Hello")
+	nc.MineBlock("There")
+
+	nc.ReplaceChain(bc)
+
+	fmt.Print("PRINTING NEW BLOCK !!!!! \n\n")
+	nc.PrintBlocks()
+
 }
