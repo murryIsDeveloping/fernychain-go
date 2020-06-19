@@ -20,7 +20,7 @@ func TestBlockchainValidation(t *testing.T) {
 	bc.MineBlock("test1")
 	bc.MineBlock("test2")
 
-	if !bc.validChain() {
+	if !bc.validate() {
 		t.Error("Blockchain should be valid")
 	}
 }
@@ -32,7 +32,7 @@ func TestBlockchainInvalidation(t *testing.T) {
 	bc.MineBlock("test2")
 	bc.blocks[1].value = "INSERTED"
 
-	if bc.validChain() {
+	if bc.validate() {
 		t.Error("Blockchain should be invalid due to injected value")
 	}
 }

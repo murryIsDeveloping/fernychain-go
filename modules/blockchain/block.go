@@ -3,7 +3,6 @@ package blockchain
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/murryIsDeveloping/fernychain-go/modules/hashing"
 	"github.com/murryIsDeveloping/fernychain-go/modules/util"
@@ -36,21 +35,19 @@ func (b *Block) proofOfWork(prevBlock Block) *Block {
 	return b
 }
 
-func validPreviousHash(currentBlock Block, prevBlock Block, c chan bool, wg *sync.WaitGroup) {
-	defer wg.Done()
+func validPreviousHash(currentBlock Block, prevBlock Block) bool {
+	fmt.Printf("current block %v", currentBlock.value)
 	pHash := hashBlock(prevBlock)
 	if pHash != currentBlock.previousHash {
-		c <- false
-		return
+		return false
 	}
 
 	bHash := hashBlock(currentBlock)
 	if bHash != currentBlock.hash {
-		c <- false
-		return
+		return false
 	}
 
-	c <- true
+	return true
 }
 
 func (b *Block) calcDifficulty(prevBlock Block) {

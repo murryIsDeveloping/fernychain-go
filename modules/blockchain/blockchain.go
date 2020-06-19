@@ -1,8 +1,6 @@
 package blockchain
 
 import (
-	"sync"
-
 	"github.com/murryIsDeveloping/fernychain-go/modules/util"
 )
 
@@ -58,59 +56,50 @@ func (bc *Blockchain) MineBlock(value string) *Block {
 // ReplaceChain will replace current chains blocks with input blockchain blocks
 // if all blocks are valid and length of the new chain is greater than the current chain
 func (bc *Blockchain) ReplaceChain(rc *Blockchain) {
-	if rc.validChain() && len(rc.blocks) > len(bc.blocks) {
+	if rc.validate() && len(rc.blocks) > len(bc.blocks) {
 		bc.blocks = rc.blocks
 	}
 }
 
-func monitorWorker(wg *sync.WaitGroup, ch chan bool) {
-	wg.Wait()
-	close(ch)
-}
-
-func batch(upperIndex int, lowerIndex int, bc *Blockchain) bool {
-	wg := &sync.WaitGroup{}
-	c := make(chan bool)
-
-	for i := upperIndex; i > lowerIndex; i-- {
-		wg.Add(1)
-		go validPreviousHash(*bc.blocks[i], *bc.blocks[i-1], c, wg)
-	}
-
-	go monitorWorker(wg, c)
-
-	for res := range c {
-		if !res {
-			return false
-		}
-	}
-
-	return true
-}
-
-func calcLower(upperIndex int) int {
-	if upperIndex-batchSize >= 0 {
-		return upperIndex - batchSize
-	}
-
-	return 0
-}
-
-func (bc *Blockchain) validChain() bool {
-	upperIndex := len(bc.blocks) - 1
-	lowerIndex := calcLower(upperIndex)
-	valid := true
-
+func validationWorker(currentBlock Block, prevBlock Block, i int, c chan bool, done chan bool) {
 	for {
-		valid = batch(upperIndex, lowerIndex, bc)
-		upperIndex = lowerIndex
-		lowerIndex = calcLower(upperIndex)
-		if upperIndex <= 0 || valid == false {
-			break
+		switch {
+		case <-c:
+			value := validPreviousHash(currentBlock, prevBlock)
+
+			if !value {
+				done <- false
+				return
+			}
+
+			if i == 1 {
+				done <- true
+				return
+			}
+
+			c <- value
+		case <-done:
+			return
+		default:
+			done <- true
 		}
 	}
 
-	return valid
+}
+
+func (bc *Blockchain) validate() bool {
+	c := make(chan bool, batchSize)
+	done := make(chan bool)
+
+	for i := len(bc.blocks) - 1; i > 0; i-- {
+		go validationWorker(*bc.blocks[i], *bc.blocks[i-1], i, c, done)
+	}
+
+	for i := 0; i < batchSize; i++ {
+		c <- true
+	}
+
+	return <-done
 }
 
 // PrintBlocks prints formatted blocks to console
