@@ -1,0 +1,9 @@
+sharding -
+shard blocks so that they are load balanced across miners
+
+wallets  -
+miner wallets and user wallets
+
+transactions & transaction pool
+
+p2p server with grpc
