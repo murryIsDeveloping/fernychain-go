@@ -80,8 +80,6 @@ func validationWorker(currentBlock Block, prevBlock Block, i int, c chan bool, d
 			c <- value
 		case <-done:
 			return
-		default:
-			done <- true
 		}
 	}
 
