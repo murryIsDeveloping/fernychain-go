@@ -1,31 +1,58 @@
 package wallet
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"fmt"
+	"crypto/sha256"
+	"crypto/x509"
 )
 
-// Wallet represents the users virtual wallet it is responsible for signing their transactions and receiving transaction
-type Wallet struct {
-	privateKey rsa.PrivateKey
-	publicKey  rsa.PublicKey
+// GenerateWallet generates a wallet for a user
+func GenerateWallet(pemKey []byte) (*rsa.PrivateKey, error) {
+	if pemKey != nil {
+		key, err := x509.ParsePKCS1PrivateKey(pemKey)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return key, nil
+	}
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
 }
 
-// GenerateWallet generates a wallet for a user
-func GenerateWallet() {
-	w := Wallet{}
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+func SignTransaction(wallet *rsa.PrivateKey, transaction string) []byte {
+	msgHash := sha256.New()
+	_, err := msgHash.Write([]byte(transaction))
 	if err != nil {
 		panic(err)
 	}
 
-	publicKey := privateKey.PublicKey
+	msgHashSum := msgHash.Sum(nil)
 
-	w.privateKey = *privateKey
-	w.publicKey = publicKey
+	signature, err := rsa.SignPSS(rand.Reader, wallet, crypto.SHA256, msgHashSum, nil)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println("Private Key : ", privateKey)
-	fmt.Println("Public key ", publicKey)
+	return signature
+}
 
+func TransactionValid(publicKey *rsa.PublicKey, signature []byte, msgHashSum []byte) bool {
+	err := rsa.VerifyPSS(publicKey, crypto.SHA256, msgHashSum, signature, nil)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func ToPem(key *rsa.PrivateKey) []byte {
+	return x509.MarshalPKCS1PrivateKey(key)
 }
