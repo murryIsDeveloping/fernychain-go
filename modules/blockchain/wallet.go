@@ -88,7 +88,7 @@ func b64ToPublicKey(address string) (*rsa.PublicKey, error) {
 // SignTransaction signs the transaction so it is clear transaction was signed by original sender
 func (w *Wallet) SignTransaction(transaction *Transaction) string {
 	msgHash := sha256.New()
-	_, err := msgHash.Write([]byte(fmt.Sprintf("%v", transaction)))
+	_, err := msgHash.Write([]byte(fmt.Sprintf("%v", transaction.outputs)))
 	if err != nil {
 		panic(err)
 	}
