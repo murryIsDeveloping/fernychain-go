@@ -36,7 +36,7 @@ func (bc *Blockchain) GetBlock(index int) Block {
 }
 
 // MineBlock mines a block by generating a new block and adding it to the blockchain
-func (bc *Blockchain) MineBlock(value string) *Block {
+func (bc *Blockchain) MineBlock(value []Transaction) *Block {
 	prevBlock := bc.blocks[len(bc.blocks)-1]
 	nonce := 0
 	b := &Block{
@@ -82,7 +82,6 @@ func validationWorker(currentBlock Block, prevBlock Block, i int, c chan bool, d
 			return
 		}
 	}
-
 }
 
 func (bc *Blockchain) validate() bool {
@@ -105,4 +104,38 @@ func (bc *Blockchain) PrintBlocks() {
 	for _, b := range bc.blocks {
 		b.Print()
 	}
+}
+
+// GetAddressValue
+func (bc *Blockchain) GetAddressValue(address string) float64 {
+	v := 0.0
+	foundLastValue := false
+
+	// work from the last block
+	for i := len(bc.blocks) - 1; i >= 0; i-- {
+		b := bc.blocks[i]
+
+		if foundLastValue {
+			return v
+		}
+		// check each transaction within the block
+		for j := len(b.value) - 1; j >= 0; j-- {
+			trans := b.value[i]
+
+			// if transaction is from user this is last known value of wallet find last value
+			if trans.input.address == address {
+				v += trans.input.value
+				foundLastValue = true
+			} else {
+				// add up all transactions after last known value including other transactions within block
+				for _, output := range trans.outputs {
+					if output.address == address {
+						v += output.amount
+					}
+				}
+			}
+		}
+	}
+
+	return v
 }

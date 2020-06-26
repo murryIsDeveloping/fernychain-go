@@ -12,7 +12,7 @@ import (
 type Block struct {
 	timestamp    int64
 	hash         string
-	value        string
+	value        []Transaction
 	previousHash string
 	nonce        int
 	difficulty   int
