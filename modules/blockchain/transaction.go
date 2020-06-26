@@ -4,26 +4,30 @@ import (
 	"errors"
 )
 
+// Output represents all the transactions made by the input for this block
 type Output struct {
 	amount  float64
 	address string
 }
 
+// Input holds all values regarding the wallet that made the transactions
 type Input struct {
 	address   string
 	value     float64
 	signature string
 }
 
+// Transaction Holds all transaction data made by a wallet
 type Transaction struct {
 	outputs []Output
 	input   Input
 }
 
-func (w *Wallet) CreateTransaction() *Transaction {
+// CreateTransaction creates a transaction object an empty outputs and sets up the inputs
+func (w *Wallet) CreateTransaction(bc *Blockchain) *Transaction {
 	input := Input{
 		address: w.PublicKey(),
-		value:   w.value,
+		value:   w.findValue(bc),
 	}
 
 	t := &Transaction{
@@ -34,7 +38,8 @@ func (w *Wallet) CreateTransaction() *Transaction {
 	return t
 }
 
-func (trans *Transaction) addTransaction(amount float64, address string) (*Transaction, error) {
+// AddTransaction Adds a transaction to the transaction object
+func (trans *Transaction) AddTransaction(amount float64, address string) (*Transaction, error) {
 	o := Output{
 		amount:  amount,
 		address: address,
@@ -46,11 +51,7 @@ func (trans *Transaction) addTransaction(amount float64, address string) (*Trans
 
 	trans.input.value -= amount
 
-	if len(trans.outputs) > 0 {
-		trans.outputs = append(trans.outputs, o)
-	} else {
-		trans.outputs = []Output{o}
-	}
+	trans.outputs = append(trans.outputs, o)
 
 	return trans, nil
 }

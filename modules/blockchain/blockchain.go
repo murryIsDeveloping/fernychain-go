@@ -106,7 +106,7 @@ func (bc *Blockchain) PrintBlocks() {
 	}
 }
 
-// GetAddressValue
+// GetAddressValue gets the wallet value of the supplied address
 func (bc *Blockchain) GetAddressValue(address string) float64 {
 	v := 0.0
 	foundLastValue := false

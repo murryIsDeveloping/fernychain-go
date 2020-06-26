@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	b64 "encoding/base64"
 	"encoding/pem"
+	"fmt"
 )
 
 // Wallet represents the end users/miners crypto wallet
@@ -67,9 +68,10 @@ func publicKeyToBytes(pub *rsa.PublicKey) []byte {
 	return pubBytes
 }
 
-func SignTransaction(wallet *rsa.PrivateKey, transaction string) []byte {
+// SignTransaction signs the transaction so it is clear transaction was signed by original sender
+func SignTransaction(wallet *rsa.PrivateKey, transaction *Transaction) string {
 	msgHash := sha256.New()
-	_, err := msgHash.Write([]byte(transaction))
+	_, err := msgHash.Write([]byte(fmt.Sprintf("%v", transaction)))
 	if err != nil {
 		panic(err)
 	}
@@ -81,9 +83,10 @@ func SignTransaction(wallet *rsa.PrivateKey, transaction string) []byte {
 		panic(err)
 	}
 
-	return signature
+	return b64.StdEncoding.EncodeToString(signature)
 }
 
+// TransactionValid Allows others to check if the signature is valid
 func TransactionValid(publicKey *rsa.PublicKey, signature []byte, msgHashSum []byte) bool {
 	err := rsa.VerifyPSS(publicKey, crypto.SHA256, msgHashSum, signature, nil)
 	if err != nil {
@@ -92,11 +95,13 @@ func TransactionValid(publicKey *rsa.PublicKey, signature []byte, msgHashSum []b
 	return true
 }
 
+// PublicKey Returns the public key of the wallet as a string
 func (w *Wallet) PublicKey() string {
 	bKey := publicKeyToBytes(&w.key.PublicKey)
 	return b64.StdEncoding.EncodeToString(bKey)
 }
 
+// ToPem converts the private key to a pem
 func ToPem(key *rsa.PrivateKey) []byte {
 	return x509.MarshalPKCS1PrivateKey(key)
 }
