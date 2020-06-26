@@ -43,7 +43,7 @@ func GenerateWallet(pemKey []byte) (*Wallet, error) {
 	return w, nil
 }
 
-func privateKeyToBytes(priv *rsa.PrivateKey) []byte {
+func privateKeyToB64(priv *rsa.PrivateKey) string {
 	privBytes := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "RSA PRIVATE KEY",
@@ -51,7 +51,16 @@ func privateKeyToBytes(priv *rsa.PrivateKey) []byte {
 		},
 	)
 
-	return privBytes
+	return b64.StdEncoding.EncodeToString(privBytes)
+}
+
+func b64ToPrivateKey(address string) (*rsa.PrivateKey, error) {
+	bytes, err := b64.StdEncoding.DecodeString(address)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509.ParsePKCS1PrivateKey(bytes)
 }
 
 func publicKeyToBytes(pub *rsa.PublicKey) []byte {
@@ -68,8 +77,16 @@ func publicKeyToBytes(pub *rsa.PublicKey) []byte {
 	return pubBytes
 }
 
+func b64ToPublicKey(address string) (*rsa.PublicKey, error) {
+	bytes, err := b64.StdEncoding.DecodeString(address)
+	if err != nil {
+		return nil, err
+	}
+	return x509.ParsePKCS1PublicKey(bytes)
+}
+
 // SignTransaction signs the transaction so it is clear transaction was signed by original sender
-func SignTransaction(wallet *rsa.PrivateKey, transaction *Transaction) string {
+func (w *Wallet) SignTransaction(transaction *Transaction) string {
 	msgHash := sha256.New()
 	_, err := msgHash.Write([]byte(fmt.Sprintf("%v", transaction)))
 	if err != nil {
@@ -78,7 +95,7 @@ func SignTransaction(wallet *rsa.PrivateKey, transaction *Transaction) string {
 
 	msgHashSum := msgHash.Sum(nil)
 
-	signature, err := rsa.SignPSS(rand.Reader, wallet, crypto.SHA256, msgHashSum, nil)
+	signature, err := rsa.SignPSS(rand.Reader, w.key, crypto.SHA256, msgHashSum, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -87,8 +104,14 @@ func SignTransaction(wallet *rsa.PrivateKey, transaction *Transaction) string {
 }
 
 // TransactionValid Allows others to check if the signature is valid
-func TransactionValid(publicKey *rsa.PublicKey, signature []byte, msgHashSum []byte) bool {
-	err := rsa.VerifyPSS(publicKey, crypto.SHA256, msgHashSum, signature, nil)
+func TransactionValid(publicKey string, signature []byte, msgHashSum []byte) bool {
+	// decode public key from bytes
+	key, err := b64ToPublicKey(publicKey)
+	if err != nil {
+		return false
+	}
+
+	err = rsa.VerifyPSS(key, crypto.SHA256, msgHashSum, signature, nil)
 	if err != nil {
 		return false
 	}
