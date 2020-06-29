@@ -1,0 +1,36 @@
+service P2P {
+   rpc ShareBlockChain ()
+}
+
+service HelloService {
+  rpc SayHello (HelloRequest) returns (HelloResponse);
+}
+
+message Output {
+	float amount = 1;
+	string address = 2;
+}
+
+message Input {
+    string address = 1;
+	float value = 2;
+    string signature = 3;
+}
+
+message Transaction {
+    Input input = 1;
+    repeated Output output = 2;
+}
+
+
+message Block {
+  	int64 timestamp = 1;
+	string hash = 2;
+	repeated Transaction = 3;
+	string previousHash = 4;
+	int nonce = 5;
+	int difficulty = 6;
+}
+
+
+

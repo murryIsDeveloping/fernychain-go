@@ -1,4 +1,4 @@
-package blockchain
+package p2p
 
 // P2P represents the p2p server
 type P2P struct {
