@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 service P2P {
    rpc ShareBlockChain ()
 }
