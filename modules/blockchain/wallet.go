@@ -18,13 +18,13 @@ type Wallet struct {
 }
 
 // GenerateWallet generates a wallet for a user
-func GenerateWallet(pemKey []byte) (*Wallet, error) {
+func GenerateWallet(privateAddress string) (*Wallet, error) {
 	w := &Wallet{
 		value: 0,
 	}
 
-	if pemKey != nil {
-		key, err := x509.ParsePKCS1PrivateKey(pemKey)
+	if privateAddress != "" {
+		key, err := b64ToPrivateKey(privateAddress)
 
 		if err != nil {
 			return nil, err
