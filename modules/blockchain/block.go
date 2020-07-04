@@ -58,7 +58,11 @@ func (b *Block) calcDifficulty(prevBlock Block) {
 }
 
 func hashBlock(b Block) string {
-	return hashing.Hash(fmt.Sprint(b.timestamp, b.value, b.previousHash, b.difficulty, b.nonce))
+	return hashing.Hash(blockValue(b))
+}
+
+func blockValue(b Block) string {
+	return fmt.Sprint(b.timestamp, b.value, b.previousHash, b.difficulty, b.nonce)
 }
 
 func (b *Block) hasNonce() bool {

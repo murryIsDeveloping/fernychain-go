@@ -9,9 +9,11 @@ func TestBlockHash(t *testing.T) {
 	bc := Genisis()
 	w, _ := GenerateWallet("")
 	transactionOne := w.CreateTransaction(bc)
+	transactionOne.input.value = 100.0
 	transactionTwo := w.CreateTransaction(bc)
-	transactionOne.AddTransaction(w, 0.0, "FakeAddress")
-	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+	transactionTwo.input.value = 100.0
+	transactionOne.AddTransaction(w, 10.0, "FakeAddress")
+	transactionTwo.AddTransaction(w, 10.0, "AnotherAddress")
 
 	blockOne := &Block{
 		timestamp:    1592470203316,

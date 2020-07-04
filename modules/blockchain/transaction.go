@@ -39,14 +39,18 @@ func (w *Wallet) CreateTransaction(bc *Blockchain) *Transaction {
 }
 
 // AddTransaction Adds a transaction to the transaction object
-func (trans *Transaction) AddTransaction(w *Wallet, amount float64, address string) (*Transaction, error) {
+func (trans *Transaction) AddTransaction(w *Wallet, amount float64, address string) error {
 	o := Output{
 		amount:  amount,
 		address: address,
 	}
 
+	if amount <= 0.0 {
+		return errors.New("Transaction must be greater than zero")
+	}
+
 	if trans.input.value-amount < 0.0 {
-		return trans, errors.New("Funds not available to complete transaction")
+		return errors.New("Funds not available to complete transaction")
 	}
 
 	trans.input.value -= amount
@@ -55,5 +59,5 @@ func (trans *Transaction) AddTransaction(w *Wallet, amount float64, address stri
 
 	trans.input.signature = w.SignTransaction(trans)
 
-	return trans, nil
+	return nil
 }

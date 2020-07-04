@@ -37,11 +37,14 @@ func TestBlockchainInvalidation(t *testing.T) {
 	bc := Genisis()
 	w, _ := GenerateWallet("")
 	transactionOne := w.CreateTransaction(bc)
+	transactionOne.input.value = 100.0
 	transactionTwo := w.CreateTransaction(bc)
+	transactionTwo.input.value = 100.0
 	transactionThree := w.CreateTransaction(bc)
-	transactionOne.AddTransaction(w, 0.0, "FakeAddress")
-	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
-	transactionThree.AddTransaction(w, 0.0, "HackedAddress")
+	transactionThree.input.value = 100.0
+	transactionOne.AddTransaction(w, 10.0, "FakeAddress")
+	transactionTwo.AddTransaction(w, 20.0, "AnotherAddress")
+	transactionThree.AddTransaction(w, 30.0, "HackedAddress")
 
 	bc.MineBlock([]Transaction{*transactionOne})
 	bc.MineBlock([]Transaction{*transactionTwo})
@@ -57,17 +60,20 @@ func TestReplaceChain(t *testing.T) {
 	bc := Genisis()
 	w, _ := GenerateWallet("")
 	transactionOne := w.CreateTransaction(bc)
+	transactionOne.input.value = 100.0
 
-	transactionOne.AddTransaction(w, 0.0, "randomAddress")
+	transactionOne.AddTransaction(w, 10.0, "randomAddress")
 
 	bc.MineBlock([]Transaction{*transactionOne})
 
 	nc := Genisis()
 	nTransactionOne := w.CreateTransaction(nc)
+	nTransactionOne.input.value = 100.0
 	nTransactionTwo := w.CreateTransaction(nc)
+	nTransactionTwo.input.value = 100.0
 
-	nTransactionOne.AddTransaction(w, 0.0, "FakeAddress")
-	nTransactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+	nTransactionOne.AddTransaction(w, 10.0, "FakeAddress")
+	nTransactionTwo.AddTransaction(w, 10.0, "AnotherAddress")
 
 	nc.MineBlock([]Transaction{*nTransactionOne})
 	nc.MineBlock([]Transaction{*nTransactionTwo})
@@ -87,18 +93,21 @@ func TestDoNotReplaceChain(t *testing.T) {
 	bc := Genisis()
 	w, _ := GenerateWallet("")
 	transactionOne := w.CreateTransaction(bc)
+	transactionOne.input.value = 100.0
 	transactionTwo := w.CreateTransaction(bc)
+	transactionTwo.input.value = 100.0
 
-	transactionOne.AddTransaction(w, 0.0, "randomAddress")
-	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+	transactionOne.AddTransaction(w, 10.0, "randomAddress")
+	transactionTwo.AddTransaction(w, 10.0, "AnotherAddress")
 
 	bc.MineBlock([]Transaction{*transactionOne})
 	bc.MineBlock([]Transaction{*transactionTwo})
 
 	nc := Genisis()
 	nTransactionOne := w.CreateTransaction(nc)
+	nTransactionOne.input.value = 100.0
 
-	nTransactionOne.AddTransaction(w, 0.0, "FakeAddress")
+	nTransactionOne.AddTransaction(w, 10.0, "FakeAddress")
 
 	nc.MineBlock([]Transaction{*nTransactionOne})
 
