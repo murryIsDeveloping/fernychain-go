@@ -6,10 +6,17 @@ import (
 
 // test the block hash function
 func TestBlockHash(t *testing.T) {
+	bc := Genisis()
+	w, _ := GenerateWallet("")
+	transactionOne := w.CreateTransaction(bc)
+	transactionTwo := w.CreateTransaction(bc)
+	transactionOne.AddTransaction(w, 0.0, "FakeAddress")
+	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+
 	blockOne := &Block{
 		timestamp:    1592470203316,
 		previousHash: "Genisis",
-		value:        "foo",
+		value:        []Transaction{*transactionOne},
 		difficulty:   4,
 		nonce:        1029561,
 	}
@@ -19,7 +26,7 @@ func TestBlockHash(t *testing.T) {
 	blockTwo := &Block{
 		timestamp:    1592470203316,
 		previousHash: "Genisis",
-		value:        "foo",
+		value:        []Transaction{*transactionOne},
 		difficulty:   4,
 		nonce:        1029561,
 	}
@@ -30,7 +37,7 @@ func TestBlockHash(t *testing.T) {
 		t.Errorf("identical blocks hash should match : %v != %v", blockOne.hash, blockTwo.hash)
 	}
 
-	blockTwo.value = "bar"
+	blockTwo.value = []Transaction{*transactionTwo}
 	blockTwo.hash = hashBlock(*blockTwo)
 
 	if blockOne.hash == blockTwo.hash {

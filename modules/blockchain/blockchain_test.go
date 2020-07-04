@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -17,8 +18,14 @@ func TestGenisisBlockchain(t *testing.T) {
 // Test if validChain will validate a valid chain
 func TestBlockchainValidation(t *testing.T) {
 	bc := Genisis()
-	bc.MineBlock("test1")
-	bc.MineBlock("test2")
+	w, _ := GenerateWallet("")
+	transactionOne := w.CreateTransaction(bc)
+	transactionTwo := w.CreateTransaction(bc)
+	transactionOne.AddTransaction(w, 0.0, "FakeAddress")
+	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+
+	bc.MineBlock([]Transaction{*transactionOne})
+	bc.MineBlock([]Transaction{*transactionTwo})
 
 	if !bc.validate() {
 		t.Error("Blockchain should be valid")
@@ -28,9 +35,18 @@ func TestBlockchainValidation(t *testing.T) {
 // Test if validChain will invalidate an invalid chain
 func TestBlockchainInvalidation(t *testing.T) {
 	bc := Genisis()
-	bc.MineBlock("test1")
-	bc.MineBlock("test2")
-	bc.blocks[1].value = "INSERTED"
+	w, _ := GenerateWallet("")
+	transactionOne := w.CreateTransaction(bc)
+	transactionTwo := w.CreateTransaction(bc)
+	transactionThree := w.CreateTransaction(bc)
+	transactionOne.AddTransaction(w, 0.0, "FakeAddress")
+	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+	transactionThree.AddTransaction(w, 0.0, "HackedAddress")
+
+	bc.MineBlock([]Transaction{*transactionOne})
+	bc.MineBlock([]Transaction{*transactionTwo})
+
+	bc.blocks[1].value = []Transaction{*transactionThree}
 
 	if bc.validate() {
 		t.Error("Blockchain should be invalid due to injected value")
@@ -39,11 +55,22 @@ func TestBlockchainInvalidation(t *testing.T) {
 
 func TestReplaceChain(t *testing.T) {
 	bc := Genisis()
-	bc.MineBlock("block1")
+	w, _ := GenerateWallet("")
+	transactionOne := w.CreateTransaction(bc)
+
+	transactionOne.AddTransaction(w, 0.0, "randomAddress")
+
+	bc.MineBlock([]Transaction{*transactionOne})
 
 	nc := Genisis()
-	nc.MineBlock("newBlock1")
-	nc.MineBlock("newBlock2")
+	nTransactionOne := w.CreateTransaction(nc)
+	nTransactionTwo := w.CreateTransaction(nc)
+
+	nTransactionOne.AddTransaction(w, 0.0, "FakeAddress")
+	nTransactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+
+	nc.MineBlock([]Transaction{*nTransactionOne})
+	nc.MineBlock([]Transaction{*nTransactionTwo})
 
 	bc.ReplaceChain(nc)
 
@@ -51,18 +78,29 @@ func TestReplaceChain(t *testing.T) {
 		t.Error("Blockchain should have length of three")
 	}
 
-	if bc.blocks[1].value != "newBlock1" || bc.blocks[2].value != "newBlock2" {
+	if fmt.Sprintf("%v", bc.blocks) != fmt.Sprintf("%v", nc.blocks) {
 		t.Errorf("Blockchain should replace old blocks with new blocks")
 	}
 }
 
 func TestDoNotReplaceChain(t *testing.T) {
 	bc := Genisis()
-	bc.MineBlock("block1")
-	bc.MineBlock("block2")
+	w, _ := GenerateWallet("")
+	transactionOne := w.CreateTransaction(bc)
+	transactionTwo := w.CreateTransaction(bc)
+
+	transactionOne.AddTransaction(w, 0.0, "randomAddress")
+	transactionTwo.AddTransaction(w, 0.0, "AnotherAddress")
+
+	bc.MineBlock([]Transaction{*transactionOne})
+	bc.MineBlock([]Transaction{*transactionTwo})
 
 	nc := Genisis()
-	nc.MineBlock("newBlock1")
+	nTransactionOne := w.CreateTransaction(nc)
+
+	nTransactionOne.AddTransaction(w, 0.0, "FakeAddress")
+
+	nc.MineBlock([]Transaction{*nTransactionOne})
 
 	bc.ReplaceChain(nc)
 
@@ -70,7 +108,7 @@ func TestDoNotReplaceChain(t *testing.T) {
 		t.Error("Blockchain should have length of three")
 	}
 
-	if bc.blocks[1].value != "block1" || bc.blocks[2].value != "block2" {
+	if fmt.Sprintf("%v", bc.blocks) == fmt.Sprintf("%v", nc.blocks) {
 		t.Errorf("Blockchain blocks should remain the same")
 	}
 }

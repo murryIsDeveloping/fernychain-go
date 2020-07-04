@@ -44,13 +44,7 @@ func GenerateWallet(privateAddress string) (*Wallet, error) {
 }
 
 func privateKeyToB64(priv *rsa.PrivateKey) string {
-	privBytes := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(priv),
-		},
-	)
-
+	privBytes := x509.MarshalPKCS1PrivateKey(priv)
 	return b64.StdEncoding.EncodeToString(privBytes)
 }
 
@@ -59,7 +53,6 @@ func b64ToPrivateKey(address string) (*rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return x509.ParsePKCS1PrivateKey(bytes)
 }
 

@@ -10,14 +10,14 @@ type Shard struct {
 	prevShardID string
 }
 
-func CreateShardMap() *map[string][]int {
-	return &make(map[string][]int)
-}
+// func CreateShardMap() *map[string][]int {
+// 	return &make(map[string][]int)
+// }
 
-func RemovePeerFromShardMap(m *map[string][]int, peer string) {
-	delete(m, peer)
-}
+// func RemovePeerFromShardMap(m *map[string][]int, peer string) {
+// 	delete(m, peer)
+// }
 
-func AddPeerToShardMap(m *map[string][]int, peer string, shards []int) {
-	m[peer] = shards
-}
+// func AddPeerToShardMap(m *map[string][]int, peer string, shards []int) {
+// 	m[peer] = shards
+// }

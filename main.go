@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/murryIsDeveloping/fernychain-go/modules/wallet"
+	"github.com/murryIsDeveloping/fernychain-go/modules/blockchain"
 )
 
 func main() {
@@ -21,6 +21,6 @@ func main() {
 
 	// fmt.Print("PRINTING NEW BLOCK !!!!! \n\n")
 	// nc.PrintBlocks()
-	wallet.GenerateWallet()
+	blockchain.GenerateWallet("")
 
 }

@@ -49,7 +49,6 @@ func (bc *Blockchain) MineBlock(value []Transaction) *Block {
 
 	nb := b.proofOfWork(*prevBlock)
 	bc.blocks = append(bc.blocks, nb)
-	nb.Print()
 	return nb
 }
 

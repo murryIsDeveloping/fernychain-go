@@ -36,7 +36,6 @@ func (b *Block) proofOfWork(prevBlock Block) *Block {
 }
 
 func validPreviousHash(currentBlock Block, prevBlock Block) bool {
-	fmt.Printf("current block %v", currentBlock.value)
 	pHash := hashBlock(prevBlock)
 	if pHash != currentBlock.previousHash {
 		return false
